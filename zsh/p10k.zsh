@@ -9,8 +9,16 @@ typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir vcs newline prompt_cha
 
 # Always show user@host (Lean hides it unless on SSH or root)
 unset POWERLEVEL9K_CONTEXT_{DEFAULT,SUDO}_{CONTENT,VISUAL_IDENTIFIER}_EXPANSION
-# user in tan (180), @ in gray (244), host in pink-purple (176)
-typeset -g POWERLEVEL9K_CONTEXT{,_REMOTE,_REMOTE_SUDO}_TEMPLATE='%F{180}%n%F{244}@%F{176}%m%f'
+# Host color is picked from a hash of the hostname, so each machine gets its own
+() {
+  local -a palette=(176 110 114 216 73 147 209 149 175 81)
+  local c; local -i h=2166136261  # FNV-1a
+  for c in ${(s::)${(%):-%m}}; do (( h = ((h ^ #c) * 16777619) & 0xffffffff )); done
+  local -i i=$(( h % $#palette + 1 ))
+  typeset -g _host_color=$palette[i]
+}
+# user in tan (180), @ in gray (244), host in its per-machine color
+typeset -g POWERLEVEL9K_CONTEXT{,_REMOTE,_REMOTE_SUDO}_TEMPLATE="%F{180}%n%F{244}@%F{$_host_color}%m%f"
 
 # Right side of line 1: run time (commands over 3s) and clock
 typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(command_execution_time time)
